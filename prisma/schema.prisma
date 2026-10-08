@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  name         String
+  bio          String?    @default("")
+  avatarUrl    String?    @default("")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relationships
+  threads      Thread[]   @relation("UserThreads")
+  likes        Like[]
+  bookmarks    Bookmark[]
+  
+  // Follow system
+  following    Follow[]   @relation("UserFollowing")
+  followers    Follow[]   @relation("UserFollowers")
+
+  @@map("users")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Thread {
+  id         String     @id @default(cuid())
+  content    String
+  mediaUrls  String     @default("[]")
+  
+  authorId   String
+  author     User       @relation("UserThreads", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Reply threading support (Parent-Child relationship)
+  parentId   String?
+  parent     Thread?    @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Thread[]   @relation("ThreadReplies")
+
+  // Repost / Quote support
+  repostOfId String?
+  repostOf   Thread?    @relation("ThreadReposts", fields: [repostOfId], references: [id], onDelete: Cascade)
+  reposts    Thread[]   @relation("ThreadReposts")
+
+  // Interactions
+  likes      Like[]
+  bookmarks  Bookmark[]
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("threads")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, threadId])
+  @@index([threadId])
+  @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, threadId])
+  @@index([userId])
+  @@map("bookmarks")
+}

@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+dev.db
+dev.db-journal
+*.log
+npm-debug.log*
+.git
+.gitignore
+README.md
+Thread_Service_API.*
+test_all_apis.ts

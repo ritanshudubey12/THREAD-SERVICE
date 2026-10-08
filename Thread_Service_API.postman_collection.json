@@ -1,0 +1,524 @@
+{
+  "info": {
+    "_postman_id": "thread-service-api-collection-v1",
+    "name": "Thread Service API",
+    "description": "Complete REST API Postman Collection for Thread Microservice including Auth, Users, Threads, Nested Replies, Follows, Likes, and Bookmarks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "threadId",
+      "value": "latest",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Root",
+      "item": [
+        {
+          "name": "Root API Manifest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Get API information and active endpoint links."
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Check service health status."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Signup / Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "        pm.collectionVariables.set('userId', json.data.user.id);",
+                  "        pm.environment.set('userId', json.data.user.id);",
+                  "        console.log('Token and userId saved to environment & collection variables');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice_dev\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Alice Developer\",\n  \"bio\": \"Full-stack engineer building microservices\",\n  \"avatarUrl\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "signup"]
+            },
+            "description": "Register a new user and automatically save token in collection & environment variables."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "        pm.collectionVariables.set('userId', json.data.user.id);",
+                  "        pm.environment.set('userId', json.data.user.id);",
+                  "        console.log('Token updated successfully');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrUsername\": \"alice_dev\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Log in with email or username to retrieve JWT token."
+          }
+        },
+        {
+          "name": "Get Current User Profile (/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Verify token and get authenticated user payload."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/alice_dev",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "alice_dev"]
+            },
+            "description": "Get user profile by username or id with followers and threads count."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Dev (Updated)\",\n  \"bio\": \"Senior Cloud & Microservices Architect 🚀\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "profile"]
+            },
+            "description": "Update name, bio, or avatarUrl for authenticated user."
+          }
+        },
+        {
+          "name": "Toggle Follow User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/follow",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "follow"]
+            },
+            "description": "Toggle follow / unfollow on a target user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Threads",
+      "item": [
+        {
+          "name": "Get Feed (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.threads && json.data.threads.length > 0) {",
+                  "        var firstId = json.data.threads[0].id;",
+                  "        pm.collectionVariables.set('threadId', firstId);",
+                  "        pm.environment.set('threadId', firstId);",
+                  "        console.log('Auto-selected threadId: ' + firstId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get top-level thread feed with pagination and like/bookmark state."
+          }
+        },
+        {
+          "name": "Create Thread",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.id) {",
+                  "        pm.collectionVariables.set('threadId', json.data.id);",
+                  "        pm.environment.set('threadId', json.data.id);",
+                  "        console.log('Created threadId saved: ' + json.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello world! Welcome to our new Thread API Microservice! 🧵🚀\",\n  \"mediaUrls\": [\n    \"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads"]
+            },
+            "description": "Create a top-level thread with optional media attachments."
+          }
+        },
+        {
+          "name": "Get Thread Details by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads/{{threadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads", "{{threadId}}"]
+            },
+            "description": "Get a specific thread with author details, counts, and nested replies array."
+          }
+        },
+        {
+          "name": "Create Reply to Thread",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is an awesome nested reply! 💬\",\n  \"parentId\": \"{{threadId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads"]
+            },
+            "description": "Reply to an existing thread by providing parentId."
+          }
+        },
+        {
+          "name": "Create Quote Repost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Check out this thread! 🔁\",\n  \"repostOfId\": \"{{threadId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads"]
+            },
+            "description": "Quote/repost an existing thread."
+          }
+        },
+        {
+          "name": "Update Thread Content",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello world! [Edited] Welcome to our updated Thread API Microservice! 🚀✨\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads/{{threadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads", "{{threadId}}"]
+            },
+            "description": "Update thread content (Author only)."
+          }
+        },
+        {
+          "name": "Delete Thread",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threads/{{threadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "threads", "{{threadId}}"]
+            },
+            "description": "Delete thread (Author only)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Interactions",
+      "item": [
+        {
+          "name": "Toggle Like Thread",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/interactions/threads/{{threadId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "interactions", "threads", "{{threadId}}", "like"]
+            },
+            "description": "Toggle like / unlike on a thread."
+          }
+        },
+        {
+          "name": "Toggle Bookmark Thread",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/interactions/threads/{{threadId}}/bookmark",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "interactions", "threads", "{{threadId}}", "bookmark"]
+            },
+            "description": "Toggle bookmark on a thread."
+          }
+        },
+        {
+          "name": "Get User Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/interactions/bookmarks?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "interactions", "bookmarks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all bookmarked threads of the authenticated user."
+          }
+        }
+      ]
+    }
+  ]
+}
